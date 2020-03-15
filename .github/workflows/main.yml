@@ -1,0 +1,243 @@
+
+
+
+Color Detector using Arduino UnoARDUINO
+
+ByDilip Raja Oct 18, 201550
+
+Color Detector using Arduino
+
+In this project we are going to interface TCS3200 color sensor with Arduino UNO. TCS3200 is a color sensor which can detect any number of colors with right programming. TCS3200 contains RGB (Red Green Blue) arrays. As shown in figure on microscopic level one can see the square boxes inside the eye on sensor. These square boxes are arrays of RGB matrix. Each of these boxes contain Three sensors, One is for sensing RED light intensity, One is for sensing GREEN light intensity and the last in for sensing BLUE light intensity.
+
+Each of sensor arrays in these three arrays are selected separately depending on requirement. Hence it is known as programmable sensor. The module can be featured to sense the particular color and to leave the others. It contains filters for that selection purpose. There is forth mode that is no filter mode. With no filter mode the sensor detects white light.
+
+Components Required
+
+Hardware: ARDUINO UNO, power supply (5v), LED, JHD_162ALCD (16*2LCD),TCS3200 color sensor.
+
+Software: ARDUINO IDE (ARDUINO nightly).
+
+Circuit Diagram and Working Explanation
+
+In 16x2 LCD there are 16 pins over all if there is a back light, if there is no back light there will be 14 pins. One can power or leave the back light pins. Now in the 14 pins there are 8 data pins (7-14 or D0-D7), 2 power supply pins (1&2 or VSS&VDD or GND&+5v), 3rd pin for contrast control (VEE-controls how thick the characters should be shown), and 3 control pins (RS&RW&E)
+
+In the circuit, you can observe I have only took two control pins. The contrast bit and READ/WRITE are not often used so they can be shorted to ground. This puts LCD in highest contrast and read mode. We just need to control ENABLE and RS pins to send characters and data accordingly. [Also check: LCD interfacing with Arduino Uno]
+
+The connections which are done for LCD are given below:
+
+PIN1 or VSS to ground
+
+PIN2 or VDD or VCC to +5v power
+
+PIN3 or VEE to ground (gives maximum contrast best for a beginner)
+
+PIN4 or RS (Register Selection) to PIN8 of ARDUINO UNO
+
+PIN5 or RW (Read/Write) to ground (puts LCD in read mode eases the communication for user)
+
+PIN6 or E (Enable) toPIN9 of ARDUINO UNO
+
+PIN11 or D4 to PIN7 of ARDUINO UNO
+
+PIN12 or D5 to PIN11 of ARDUINO UNO
+
+PIN13 or D6 to PIN12 of ARDUINO UNO
+
+PIN14 or D7 to PIN13 of ARDUINO UNO
+
+The connections which are done for color sensor are given below:
+
+VDD to +5V
+
+GND to GROUND
+
+OE (output Enable) to GND
+
+S0 to UNO pin 2
+
+S1 to UNO pin 3
+
+S2 to UNO pin 4
+
+S3 to UNO pin 5
+
+OUT to UNO pin 10
+
+The color which needs to be sensed by the color sensor is selected by two pins S2 and S3. With these two pins logic control we can tell sensor which color light intensity is to be measured.
+
+Say we need to sense the RED color intensity we need to set both pins to LOW. Once that is done the sensor detects the intensity and sends the value to the control system inside the module.
+
+S2
+
+S3
+
+Photodiode Type
+
+L
+
+L
+
+Red
+
+L
+
+H
+
+Blue
+
+H
+
+L
+
+Clear (no filter)
+
+H
+
+H
+
+Green
+
+The control system inside the module is shown in figure. The light intensity measured by array is sent to current to frequency converter. What it does is, it puts out a square wave whose frequency is in relation to current sent by ARRAY.
+
+So we have a system which sends out a square wave whose frequency depends on light intensity of color which is selected by S2 and S3.
+
+The signal frequency sent by module can be modulated depending on use. We can change the output signal frequency bandwidth.
+
+S0
+
+S1
+
+Output Frequency Scaling (f0)
+
+L
+
+L
+
+Power Down
+
+L
+
+H
+
+2%
+
+H
+
+L
+
+20%
+
+H
+
+H
+
+100%
+
+The frequency scaling is done by two bits S0 and S1. For convenience we are going to limit the frequency scaling to 20%. This is done by setting S0 to high and S1 to LOW. This feature comes in handy when we are using the module on system with low clock.
+
+The Array sensitivity to color is shown in below figure.
+
+Although different colors have different sensitivity, for a normal use it won’t make much difference.
+
+The UNO here send signal to module to detect colors and the data received by the module is shown in the 16*2 LCD connected to it.
+
+The UNO detects three color intensities separately and shows them on LCD.
+
+The Uno can detect the signal pulse duration by which we can get the frequency of square wave sent by module. With the frequency at hand we can match it with color on sensor.
+
+Int frequency = pulseIn(10, LOW);
+
+As by above condition the UNO reads pulse duration on 10th pin of UNO and stores it value in “frequency” integer.
+
+We are going to do this for all three colors for color recognition. All three color intensities are shown by frequencies on 16x2 LCD.
+
+Code
+
+int OutPut= 10;//naming pin10 of uno as output
+
+unsigned int frequency = 0;
+
+#include <LiquidCrystal.h>
+
+// initialize the library with the numbers of the interface pins
+
+LiquidCrystal lcd(8, 9, 7, 11, 12, 13);//RS,EN,D4,D5,D6,D7
+
+void setup()
+
+{
+
+                // set up the LCD's number of columns and rows
+
+                lcd.begin(16, 2);
+
+                pinMode(2, OUTPUT);
+
+                pinMode(3, OUTPUT);//PINS 2, 3,4,5 as OUTPUT
+
+                pinMode(4, OUTPUT);
+
+                pinMode(5, OUTPUT);
+
+                pinMode(10, INPUT);//PIN 10 as input
+
+                digitalWrite(2,HIGH);
+
+                digitalWrite(3,LOW);//setting frequency selection to 20%
+
+}
+
+void loop()
+
+{
+
+                lcd.print("R=");//printing name
+
+                digitalWrite(4,LOW);
+
+                digitalWrite(5,LOW);//setting for RED color sensor
+
+                frequency = pulseIn(OutPut, LOW);//reading frequency
+
+                lcd.print(frequency);//printing RED color frequency
+
+                lcd.print("  ");
+
+                lcd.setCursor(7, 0);//moving courser to position 7
+
+                delay(500);
+
+               lcd.print("B=");// printing name
+
+                digitalWrite(4,LOW);
+
+                digitalWrite(5,HIGH);// setting for BLUE color sensor
+
+                frequency = pulseIn(OutPut, LOW);// reading frequency
+
+                lcd.print(frequency);// printing BLUE color frequency
+
+                lcd.print("  ");
+
+                lcd.setCursor(0, 1);
+
+                delay(500);
+
+               lcd.print("G=");// printing name
+
+                digitalWrite(4,HIGH);
+
+                digitalWrite(5,HIGH);// setting for GREEN color sensor
+
+                frequency = pulseIn(OutPut, LOW);// reading frequency
+
+                lcd.print(frequency);// printing GREEN color frequency
+
+                lcd.print("    ");
+
+                lcd.setCursor(0, 0);
+
+                delay(500);        
+
+}              
+
